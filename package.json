@@ -1,0 +1,12 @@
+{
+  "name": "jxc-updates",
+  "version": "1.0.0",
+  "description": "Receive dailys texts that contain a summary of the Jackson Ski Touring Ski Report",
+  "main": "index.js",
+  "repository": "https://github.com/McCambley/jxc-updates.git",
+  "author": "McCambley <jakemccamb16@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  }
+}
