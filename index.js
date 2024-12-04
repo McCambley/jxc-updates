@@ -7,8 +7,9 @@ async function readTrailReport() {
 
   const reportBody = $("section.av_textblock_section");
   const reportText = reportBody.text();
+  const usableText = reportText.split("Season passes")[0];
 
-  console.log(reportBody.text());
+  console.log(usableText);
 
   // TODO
   // Summarize report text with OpenAI API
