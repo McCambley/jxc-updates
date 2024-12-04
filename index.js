@@ -13,6 +13,7 @@ async function readTrailReport() {
 
   // TODO
   // Summarize report text with OpenAI API
+  // PROMPT: "Translate the input into a concise, user-friendly text message for skiers. The message should include essential details such as trail conditions, grooming updates, special notes, and any relevant instructions or policies. Ensure the tone is clear, friendly, and professional. The message must not exceed 160 characters. Prioritize clarity and brevity."
   // Read grooming report PDF
   // Summarize PDF with OpenAI API
   // Send text update via Twilio
