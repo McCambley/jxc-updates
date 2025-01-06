@@ -1,18 +1,21 @@
 {
   "name": "jxc-updates",
   "version": "1.0.0",
-  "description": "Receive dailys texts that contain a summary of the Jackson Ski Touring Ski Report",
+  "description": "Receive daily texts that contain a summary of the Jackson Ski Touring Ski Report",
   "main": "index.js",
   "repository": "https://github.com/McCambley/jxc-updates.git",
   "author": "McCambley <jakemccamb16@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "node index.js"
+    "start": "nodemon index.js"
   },
   "dependencies": {
     "cheerio": "^1.0.0",
     "dotenv": "^16.4.7",
-    "openai": "^4.75.0"
+    "express": "^4.21.2",
+    "nodemon": "^3.1.9",
+    "openai": "^4.75.0",
+    "sqlite3": "^5.1.7"
   },
   "type": "module"
 }

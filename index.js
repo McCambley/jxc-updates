@@ -1,11 +1,64 @@
 // @ts-check
 import { load } from "cheerio";
 import OpenAI from "openai";
+import express from "express";
 import "dotenv/config";
+import sqlite3 from "sqlite3";
 
 const apiKey = process.env.OPENAI_API_KEY;
+const PORT = process.env.PORT || 3000;
+const systemPrompt =
+  "Translate the input into a concise, user-friendly text message for skiers. The message should include essential details such as trail conditions, grooming updates, special notes, and any relevant instructions or policies. Ensure the tone is clear, friendly, and professional. The message must not exceed 500 characters. Prioritize clarity and brevity. Sign off as SkiBot.";
+const URL = "https://www.jacksonxc.org/trail-report";
 
 const openai = new OpenAI({ apiKey });
+const app = express();
+const db = new sqlite3.Database("ski_reports.db");
+
+//  Initialize Database
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_summary TEXT NOT NULL,
+    original_report TEXT NOT NULL,
+    prompt TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP  
+  )`);
+});
+
+function getLatestReport() {
+  return new Promise((resolve, reject) => {
+    db.get(
+      `SELECT report_summary, original_report, created_at
+      FROM reports
+      ORDER BY created_at DESC
+      LIMIT 1
+      `,
+      (err, row) => {
+        if (err) reject(err);
+        resolve(row);
+      }
+    );
+  });
+}
+
+// Function to store new report
+function storeReport(reportData) {
+  const {
+    message: { content },
+    originalText,
+  } = reportData;
+  return new Promise((resolve, reject) => {
+    db.run(
+      "INSERT INTO reports (report_summary, original_report, prompt) VALUES (?, ?, ?)",
+      [content, originalText, systemPrompt],
+      function (err) {
+        if (err) reject(err);
+        resolve("ok");
+      }
+    );
+  });
+}
 
 /**
  *
@@ -18,8 +71,7 @@ async function summarizeText(text) {
     messages: [
       {
         role: "system",
-        content:
-          "Translate the input into a concise, user-friendly text message for skiers. The message should include essential details such as trail conditions, grooming updates, special notes, and any relevant instructions or policies. Ensure the tone is clear, friendly, and professional. The message must not exceed 500 characters. Prioritize clarity and brevity. Sign off as SkiBot.",
+        content: systemPrompt,
       },
       {
         role: "user",
@@ -28,10 +80,11 @@ async function summarizeText(text) {
     ],
   });
 
-  console.log(completion.choices[0].message);
+  const message = completion.choices[0].message;
+
+  return message;
 }
 
-const URL = "https://www.jacksonxc.org/trail-report";
 async function readTrailReport() {
   const response = await fetch(URL);
   const trailReport = await response.text();
@@ -41,18 +94,58 @@ async function readTrailReport() {
   const reportText = reportBody.text();
   const usableText = reportText.split("Season passes")[0];
 
-  await summarizeText(usableText);
+  const message = await summarizeText(usableText);
 
-  console.log(usableText);
-
-  // TODO
-  // Summarize report text with OpenAI API
-  // PROMPT: "Translate the input into a concise, user-friendly text message for skiers. The message should include essential details such as trail conditions, grooming updates, special notes, and any relevant instructions or policies. Ensure the tone is clear, friendly, and professional. The message must not exceed 160 characters. Prioritize clarity and brevity."
-  // EXAMPLE RESPONSE: Boggy & Quail groomed for classic/skate. Fun loop test groomed in Village; more soon! $15 tickets. No dogs/walking on Wave. Carpool/park in permitted spots.
-  // Read grooming report PDF
-  // Summarize PDF with OpenAI API
-  // Send text update via Twilio
-  // Refactor this to work as GCF or Lambda Function
+  return {
+    message,
+    systemPrompt,
+    originalText: usableText,
+  };
 }
 
-readTrailReport();
+// Function to check if we need to fetch new data
+function isReportStale(timestamp) {
+  if (!timestamp) return true;
+
+  const reportTime = new Date(timestamp).getTime();
+  const currentTime = new Date().getTime();
+  const hoursSinceReport = (currentTime - reportTime) / (1000 * 60 * 60);
+
+  // Consider report stale if it's more than 1 hour old
+  return hoursSinceReport > 1;
+}
+
+app.get("/", async (req, res) => {
+  db.run("DELETE from reports");
+  res.status(200).send({ status: "ok" });
+});
+
+app.get("/ski-report", async (req, res) => {
+  // Check for cached report
+  const latestReport = await getLatestReport();
+
+  // If there's a recent report, return it
+  if (latestReport && !isReportStale(latestReport.created_at)) {
+    console.log("Returning cached report");
+    res.json({
+      data: latestReport.report_summary,
+      cached: true,
+      timestamp: latestReport.created_at,
+    });
+  } else {
+    // Otherwise, fetch new report
+    const newReport = await readTrailReport();
+    // Store new report
+    await storeReport(newReport);
+    // Return new report
+    res.json({
+      data: newReport.message.content,
+      cached: false,
+      timestamp: new Date(),
+    });
+  }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
