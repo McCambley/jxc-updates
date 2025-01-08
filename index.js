@@ -14,6 +14,8 @@ const URL = "https://www.jacksonxc.org/trail-report";
 const openai = new OpenAI({ apiKey });
 const app = express();
 const db = new sqlite3.Database("ski_reports.db");
+const MINUTES = 1000 * 60;
+const MAX_AGE_MINUTES = 5;
 
 //  Initialize Database
 db.serialize(() => {
@@ -107,12 +109,16 @@ async function readTrailReport() {
 function isReportStale(timestamp) {
   if (!timestamp) return true;
 
-  const reportTime = new Date(timestamp).getTime();
-  const currentTime = new Date().getTime();
-  const hoursSinceReport = (currentTime - reportTime) / (1000 * 60 * 60);
+  const then = new Date(timestamp + "Z");
+  const reportTime = then.getTime();
+  const now = new Date();
+  const currentTime = now.getTime();
+  // const hoursSinceReport = (currentTime - reportTime) / (1000 * 60 * 60);
+  const minutesSinceReport = (currentTime - reportTime) / MINUTES;
 
   // Consider report stale if it's more than 1 hour old
-  return hoursSinceReport > 1;
+  // return hoursSinceReport > 1;
+  return minutesSinceReport > MAX_AGE_MINUTES;
 }
 
 app.get("/", async (req, res) => {
