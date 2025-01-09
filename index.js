@@ -17,17 +17,15 @@ const app = express();
 const db = new sqlite3.Database("ski_reports.db");
 const MINUTES = 1000 * 60;
 const MAX_AGE_MINUTES = 5;
-const allowedOrigins = [
-  "http://127.0.0.1:5500",
-  // "http://localhost:3000",
-  "https://mccambley.github.io/jxc-updates-frontend/",
-];
+const allowedOrigins = ["http://127.0.0.1:5500", "https://mccambley.github.io"];
 
 const corsOptions = {
   origin: (origin, callback) => {
     if (allowedOrigins.indexOf(origin) !== -1) {
+      console.log({ origin });
       callback(null, true);
     } else {
+      console.log({ origin });
       callback(new Error("Not allowed by CORS"));
     }
   },
