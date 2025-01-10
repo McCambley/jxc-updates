@@ -9,7 +9,8 @@ import cors from "cors";
 const apiKey = process.env.OPENAI_API_KEY;
 const PORT = process.env.PORT || 3000;
 const systemPrompt =
-  "You summarize a nordic ski report for experienced nordic skiers. Summarize the input according to the following directions. DO NOT USER MARKDOWN. The report should include essential sections (not numbered): A bright salutation then 1) Today's Best Bet 2) Grooming Updates 3) Trail Conditions 4) Announcements (if applicable). The 'Best Bet' MUST tell skiers what trail to ski in order to have the best day. Unless it has recently snowed according to the report, or the report explicitly mentions soft snow on the best trail, suggest using skate skis. For the entire summary, ensure the tone is clear, friendly, and professional. The summary must not exceed 750 characters. Prioritize clarity and brevity. Sign off as SkiBot.";
+  // "You summarize a nordic ski report for experienced nordic skiers. Summarize the input according to the following directions. DO NOT USER MARKDOWN. The report should include essential sections (not numbered): A bright salutation then 1) Today's Best Bet 2) Grooming Updates 3) Trail Conditions 4) Announcements (if applicable). The 'Best Bet' MUST tell skiers what trail to ski in order to have the best day. Unless it has recently snowed according to the report, or the report explicitly mentions soft snow on the best trail, suggest using skate skis. For the entire summary, ensure the tone is clear, friendly, and professional. The summary must not exceed 750 characters. Prioritize clarity and brevity. Sign off as SkiBot.";
+  "You summarize a nordic ski report for experienced nordic skiers. Based on the input answer the following questions: Best Bet: Where should ski? Grooming Report: What has been groomed? Conditions: What are the conditions. DO NOT USE MARKDOWN.";
 const URL = "https://www.jacksonxc.org/trail-report";
 
 const openai = new OpenAI({ apiKey });
