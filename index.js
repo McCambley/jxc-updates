@@ -17,7 +17,7 @@ const openai = new OpenAI({ apiKey });
 const app = express();
 const db = new sqlite3.Database("ski_reports.db");
 const MINUTES = 1000 * 60;
-const MAX_AGE_MINUTES = 5;
+const MAX_AGE_MINUTES = 60 * 2;
 const allowedOrigins = ["http://127.0.0.1:5500", "https://mccambley.github.io"];
 
 const corsOptions = {
